@@ -7,6 +7,6 @@ module.exports = {
       ecmaVersion: 12,
     },
     rules: {
-      'no-console': 2, // using 2 for error
+      'no-console': 1, // using 2 for error
     },
   };
