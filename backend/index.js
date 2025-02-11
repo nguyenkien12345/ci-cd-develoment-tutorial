@@ -75,5 +75,5 @@ app.put('/api/article', async (req, res) => {
 // curl -X POST -H "Content-Type: application/json" -d '{"title":"New Title","content":"New Content"}' https://hocptit-redesigned-spoon-4w6646vxp54h4jj-3001.preview.app.github.dev/api/article
 
 app.listen(port, () => {
-  console.log(`Server started at http://localhost:${port}`);
+  console.log(`Server is started at http://localhost:${port}`);
 });
