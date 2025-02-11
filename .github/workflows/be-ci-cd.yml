@@ -1,0 +1,51 @@
+# - Là tên cố định của workflow
+# - Hiển thị trong tab Actions của GitHub repository
+# - Không thay đổi giữa các lần chạy
+name: BE-CI-CD
+
+# - Là tên của một lần chạy workflow cụ thể
+# - Có thể được tùy chỉnh động dựa trên các biến GitHub context
+run-name: BE-CI-CD
+
+on:
+  # - Workflow chỉ chạy khi có PR vào nhánh develop và có sự thay đổi trong folder backend
+  # - Nếu PR chỉ thay đổi code trong frontend/, workflow sẽ KHÔNG chạy
+  # - paths được khai báo trong pull_request (là một phần của on) để chỉ định điều kiện THÊM cho việc trigger workflow
+  # - backend/: chỉ định folder backend
+  # - **: match tất cả files và folders bên trong folder backend
+  pull_request:
+    branches:
+      - 'develop'
+    paths:
+      - backend/**
+
+# - defaults dùng để set giá trị mặc định cho toàn bộ workflow
+# - working-directory là nơi mà các commands trong run sẽ được thực thi
+# - GitHub Actions sẽ tự động CD (change directory) vào folder backend trước khi chạy bất kỳ command nào
+# - Không cần phải viết cd backend trước mỗi command
+defaults:
+  run:
+    working-directory: ./backend
+
+jobs:
+  run-quality-code:
+    runs-on: ubuntu-latest # Runner free
+    steps:
+      - name: Checkout code 
+        uses: actions/checkout@v3
+
+      - name: Using docker to check convention code
+        # -i: chế độ interactive
+        # --rm: tự động xóa container sau khi chạy xong
+        # -v $(pwd):/app/source: mount thư mục hiện tại vào /app/source trong container
+        # -v $(pwd)/.prettierrc: mount file .prettierrc vào container
+        # Image hocptit/eslint-ci:0.0.1 là một custom image chứa sẵn ESLint và các config
+        # ".": chạy lint cho toàn bộ code trong thư mục hiện tại
+        run: |
+          echo "Start lint..."
+          echo "Install tool..."
+          docker run -i --rm -v $(pwd):/app/source -v $(pwd)/.prettierrc hocptit/eslint-ci:0.0.1 "."
+          echo "Lint done."
+    
+# Notes:
+# - GitHub Actions runners (máy ảo Ubuntu) đã được cài đặt sẵn Docker và nhiều công cụ phổ biến khác. Đó là lý do ở trên ta không hề thấy việc cài đặt thiết lập docker
