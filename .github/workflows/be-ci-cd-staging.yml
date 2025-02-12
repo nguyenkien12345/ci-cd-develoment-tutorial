@@ -33,23 +33,44 @@ jobs:
       
       # echo "${{ secrets.ENV_STAGING }}" >> .env => Được sử dụng để tạo file .env từ một GitHub secret. 
       
+      # - Secret này thường chứa toàn bộ nội dung của file .env dưới dạng text
+
       # - Trong repository của chúng ta, thanh menu chọn Settings. Tại thanh sidebars (tay phải), chọn mục Security, chọn Secrets and variables, chọn Actions. 
       # Tại màn hình Actions secrets and variables, thanh tabs đang được active tại mục Secrets, tại mục Repository secrets bấm New repository secret.
       # Tại màn hình Actions secrets / New secret, mục Name điền ENV_STAGING, mục Secret dán toàn bộ các giá trị của file .env vào là done
-      
-      # - Secret này thường chứa toàn bộ nội dung của file .env dưới dạng text
-      
+
       # - >> là operator để append text vào file. Nếu file .env chưa tồn tại, nó sẽ được tạo mới. Nếu file đã tồn tại, nội dung sẽ được thêm vào cuối file
       
       # - Bảo mật: Không phải commit file .env vào repository
       # - Tự động hóa: File .env được tạo tự động trong quá trình CI/CD
       # - Linh hoạt: Có thể có các biến môi trường khác nhau cho các môi trường khác nhau (staging, production)
+
+      # Sau khi chay thành công job này thì ở terminal của server chúng ta sẽ mở một terminal mới và gõ: cd ~/actions-runner/_work/ci-cd-develoment-tutorial/ci-cd-develoment-tutorial/backend
+      # Lúc này chúng ta sẽ thấy xuất hiện 1 file .env được tạo ra. Ngoài ra chúng ta có thể chạy thêm câu lệnh docker images => Lúc này chúng ta sẽ thấy cái images mà chúng ta đã build xuất hiên
+
+      # Lý do chúng ta phải chạy câu lệnh tạo ra file .env này là vì trong file docker-compose.yaml yêu cầu có 1 file .env nên nếu chúng ta không tạo ra file .env thì quá trình build sẽ luôn luôn fail
       - name: Build image
         run: |
           echo "Start Build Image..."
           echo "${{ secrets.ENV_STAGING }}" >> .env
           docker compose build node-container
           echo "Build Image Done."
+
+  deploy:
+    runs-on: [self-hosted, backend-server-staging]
+    # Đảm bảo chạy sau khi job build hoàn tất (Nếu job build thất bại thì job deploy sẽ không chạy)
+    needs: [build]
+    steps:
+      - name: Checkout code 
+        uses: actions/checkout@v3
+
+      # Lý do chúng ta phải chạy câu lệnh tạo ra file .env này là vì trong file docker-compose.yaml yêu cầu có 1 file .env nên nếu chúng ta không tạo ra file .env thì quá trình build sẽ luôn luôn fail
+      - name: Run image
+        run: |
+          echo "Start Run Build Image..."
+          echo "${{ secrets.ENV_STAGING }}" >> .env
+          docker compose up -d
+          echo "Run Build Image Done.
 
 
 
