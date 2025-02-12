@@ -31,7 +31,7 @@ const Article = mongoose.model('Article', articleSchema);
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 
-api.get('/', async(req, res) => {
+app.get('/', async(req, res) => {
   res.json({ message: "Hello World" })
 })
 
