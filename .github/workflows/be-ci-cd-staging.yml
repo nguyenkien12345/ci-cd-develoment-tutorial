@@ -1,0 +1,113 @@
+name: BE Deploy Staging
+run-name: BE Deploy Staging
+
+on:
+  push:
+    branches:
+      - 'staging'
+    paths:
+      - backend/**
+
+defaults:
+  run:
+    working-directory: ./backend
+
+jobs: 
+  build: 
+    # self-hosted: Chỉ định rằng job sẽ chạy trên runner do tổ chức/công ty tự quản lý, thay vì sử dụng GitHub-hosted runners.
+    # Có nghĩa là: Bạn đã cài đặt và cấu hình GitHub Actions runner trên server của riêng mình.
+    # Có toàn quyền kiểm soát về phần cứng, hệ điều hành và môi trường của runner.
+    # Có thể truy cập các tài nguyên nội bộ một cách an toàn
+
+    # backend-server-staging: Là label tự định nghĩa để xác định cụ thể runner nào sẽ xử lý job này. Label này cho biết:
+    # Job sẽ chạy trên server được gắn nhãn là "backend-server-staging". Đây có thể là môi trường staging dành riêng cho backend
+    # Runner phải có label này thì mới được chọn để chạy job 
+
+    # Do chúng ta có thể có nhiều con runner khác nhau, mà mỗi một con runner nó lại thực hiện 1 nhiệm vụ khác nhau hoặc 1 môi trường khác nhau
+    runs-on: [self-hosted, backend-server-staging]
+    steps:
+      - name: Checkout code 
+        uses: actions/checkout@v3
+
+      # Chỉ build image cho service node-container. Service mongodb sử dụng image có sẵn nên lệnh build mongodb là không cần thiết
+      
+      # echo "${{ secrets.ENV_STAGING }}" >> .env => Được sử dụng để tạo file .env từ một GitHub secret. 
+      
+      # - Secret này thường chứa toàn bộ nội dung của file .env dưới dạng text
+
+      # - Trong repository của chúng ta, thanh menu chọn Settings. Tại thanh sidebars (tay phải), chọn mục Security, chọn Secrets and variables, chọn Actions. 
+      # Tại màn hình Actions secrets and variables, thanh tabs đang được active tại mục Secrets, tại mục Repository secrets bấm New repository secret.
+      # Tại màn hình Actions secrets / New secret, mục Name điền ENV_STAGING, mục Secret dán toàn bộ các giá trị của file .env vào là done
+
+      # - >> là operator để append text vào file. Nếu file .env chưa tồn tại, nó sẽ được tạo mới. Nếu file đã tồn tại, nội dung sẽ được thêm vào cuối file
+      
+      # - Bảo mật: Không phải commit file .env vào repository
+      # - Tự động hóa: File .env được tạo tự động trong quá trình CI/CD
+      # - Linh hoạt: Có thể có các biến môi trường khác nhau cho các môi trường khác nhau (staging, production)
+
+      # Sau khi chay thành công job này thì ở terminal của server chúng ta sẽ mở một terminal mới và gõ: cd ~/actions-runner/_work/ci-cd-develoment-tutorial/ci-cd-develoment-tutorial/backend
+      # Lúc này chúng ta sẽ thấy xuất hiện 1 file .env được tạo ra. Ngoài ra chúng ta có thể chạy thêm câu lệnh docker images => Lúc này chúng ta sẽ thấy cái images mà chúng ta đã build xuất hiên
+
+      # Lý do chúng ta phải chạy câu lệnh tạo ra file .env này là vì trong file docker-compose.yaml yêu cầu có 1 file .env nên nếu chúng ta không tạo ra file .env thì quá trình build sẽ luôn luôn fail
+      - name: Build image
+        run: |
+          echo "Start Build Image..."
+          echo "${{ secrets.ENV_STAGING }}" >> .env
+          docker compose build node-container
+          echo "Build Image Done."
+
+  deploy:
+    runs-on: [self-hosted, backend-server-staging]
+    # Đảm bảo chạy sau khi job build hoàn tất (Nếu job build thất bại thì job deploy sẽ không chạy)
+    needs: [build]
+    steps:
+      - name: Checkout code 
+        uses: actions/checkout@v3
+
+      # Lý do chúng ta phải chạy câu lệnh tạo ra file .env này là vì trong file docker-compose.yaml yêu cầu có 1 file .env nên nếu chúng ta không tạo ra file .env thì quá trình build sẽ luôn luôn fail
+
+      # Sau khi chay thành công job này thì ở terminal của server chúng ta sẽ mở một terminal mới và gõ: cd ~/actions-runner/_work/ci-cd-develoment-tutorial/ci-cd-develoment-tutorial/backend
+      # Lúc này chúng ta sẽ thấy xuất hiện 1 file .env được tạo ra. 
+      
+      # Ngoài ra chúng ta có thể chạy thêm câu lệnh docker ps => Lúc này chúng ta sẽ thấy các cái container đã run lên. 
+      # Sau đó chúng ta copy cái id của con container nodejs rồi gõ: docker logs -f id_container_nodejs => Nếu thấy thông báo MongoDB connected! => Nghĩa là chúng ta đã chạy thành công
+      - name: Run image
+        run: |
+          echo "Start Run Build Image..."
+          echo "${{ secrets.ENV_STAGING }}" >> .env
+          docker compose up -d
+          echo "Run Build Image Done."
+
+
+
+
+
+
+# Hướng dẫn setup Runners của github vào trong server VPS nội bộ để chạy tích hợp CI/CD
+
+# - B1: Vào trong dự án (repository) trên github mà chúng ta muốn tích hợp Runners
+
+# - B2: Trên thanh menu, tìm mục Settings, sau đó bên thanh Sidebar (tay phải), chọn Actions, chọn Runners. 
+# Chúng ta sẽ được chuyển đến màn hình Runners. Bấm New self-hosted runner 
+
+# Bonus: Tại terminal của con server VPS của chúng ta, gõ: uname -a (dùng để hiển thị thông tin cơ bản về hệ thống.) Ta sẽ thấy nó hiển thị tên kernel là Linux
+
+# - B3: Tại mục Runner image, chọn Linux. Tại mục Architecture, chọn x64
+
+# - B4: Tại mục Download, copy lần lượt từng câu lệnh dán vào trong terminal của con server VPS để thực thi. 
+# (Lưu ý trong server VPS nên cd về ~ (cd ~) trước khi bắt đầu thực hiện lần lượt từng câu lệnh Download)
+
+# - B5: Sau khi đã thực hiện đầy đủ toàn bộ các bước Download thì chúng ta sẽ tiến hành tiếp tục các bước ở mục Configure. Thường thì ở mục Configure sẽ chỉ bao gồm 2 bước cài đặt
+# - Sau khi copy chạy câu lệnh sau từ mục Configure: ./config.sh --url https://github.com/nguyenkien12345/ci-cd-develoment-tutorial --token ABCDXYZ123123456456789789
+# Thì nó sẽ hiển thị lên các lựa chọn như sau:
+# 1) Enter the name of the runner group to add this runner to: [press Enter for Default]  => Gõ enter để để giá trị Default
+# 2) Enter the name of runner: [press Enter for codespaces-aad537] => Đặt tuỳ ý. Nhưng chúng ta nên đặt trùng nó với label của runner để dễ làm việc và quản lý. Ở đây tôi sẽ đặt là backend-server-staging
+# 3) Enter any additional labels (ex. label-1,label-2): [press Enter to skip] => Tạo label cho runner. Nên luôn luôn đặt giá trị vì nó quan trọng trong việc setup trigger các điều kiện. Ở đây tôi sẽ đặt là backend-server-staging (Trùng với name của Runner)
+# 4) Enter name of work folder: [press Enter for _work] =>  Gõ enter để để giá trị Default (Thư mục _work)
+
+# - B6: Chạy nốt câu lệnh ./run.sh trong mục Configure là done
+
+# - B7: Chúng ta mở một tab terminal mới trên con server (Vẫn để nguyên 1 terminal chạy cái tác vụ Listening for Jobs từ câu lệnh ./run.sh). Gõ: cd ~/actions-runner/
+
+# - B8: Nếu như mà chúng ta đã chạy ít nhất 1 actions từ con runners thì trong folder actions-runner sẽ xuất hiện folder _work (Nếu như chưa từng chạy 1 actions nào thì trong folder actions-runner sẽ không xuất hiện folder _work này)
+# Gõ cd _work => Gõ tiếp ls -la => Thì chúng ta sẽ thấy có folder dự án của chúng ta xuất hiện ở trong _work. Đó là do con runners checkout code của chúng ta ra sau đó nó sẽ tiến hành chạy các cái job trên cái source code này

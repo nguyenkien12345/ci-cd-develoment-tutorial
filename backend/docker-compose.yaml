@@ -1,32 +1,54 @@
 version: '3.7'
 services:
   node-container:
+    # Build từ Dockerfile trong thư mục hiện tại
     build:
       context: .
       dockerfile: Dockerfile
+    # Load các biến môi trường từ file .env vào container. File này phải được đặt cùng cấp với docker-compose.yaml. Tách biệt config khỏi code.
+    # Dễ thay đổi giá trị mà không cần sửa docker-compose. Có thể ignore file .env trên git để bảo mật
     env_file:
       - .env
+    # Map port 3001 từ container ra host
     ports:
       - 3001:3001
+    # Kết nối vào network hh_network
     networks:
       - hh_network
+    # Phụ thuộc vào service mongodb (sẽ chờ mongodb khởi động xong)
     depends_on:
       - mongodb
-  # Mongo service
+  
   mongodb:
     image: mongo:5.0
     container_name: mongo-container
+    # Cấu hình tài khoản root MongoDB
     environment:
       MONGO_INITDB_ROOT_USERNAME: 'admin'
       MONGO_INITDB_ROOT_PASSWORD: 'admin'
+    # Map port 27017 trong container ra port 27022 ngoài host
     ports:
       - 27022:27017
+    # Tự động restart trừ khi bị stop thủ công
     restart: "unless-stopped"
+    # Kết nối vào network hh_network
     networks:
       - hh_network
+    # Sử dụng volume db để lưu trữ data
+    # Cú pháp này có dạng: <volume_name>:<container_path>
+    # db là tên volume được định nghĩa ở phần volumes bên dưới file
+    # /data/db là đường dẫn trong container nơi MongoDB lưu trữ data
+    # Docker sẽ tạo một volume tên "db" trong system
+    # Mount volume này vào thư mục /data/db trong container
+    # Data sẽ được lưu trữ permanent ngay cả khi container bị xóa
+    # Volume có thể được tái sử dụng giữa các container
+    # Dễ dàng backup data bằng cách backup volume
+    # volumes giúp lưu trữ data bền vững qua các lần restart container
     volumes:
       - db:/data/db
 volumes:
+  # Lưu trữ dữ liệu MongoDB
   db:
 networks:
+  # Network riêng cho các container giao tiếp
   hh_network:
