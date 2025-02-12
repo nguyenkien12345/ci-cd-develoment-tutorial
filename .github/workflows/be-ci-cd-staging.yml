@@ -29,19 +29,32 @@ jobs:
       - name: Checkout code 
         uses: actions/checkout@v3
 
+      # Chỉ build image cho service node-container. Service mongodb sử dụng image có sẵn nên lệnh build mongodb là không cần thiết
+      - name: Build image
+        run: |
+          echo "Start Build Image..."
+          docker compose build node-container
+          echo "Build Image Done."
+
 
 
 
 
 
 # Hướng dẫn setup Runners của github vào trong server VPS nội bộ để chạy tích hợp CI/CD
+
 # - B1: Vào trong dự án (repository) trên github mà chúng ta muốn tích hợp Runners
+
 # - B2: Trên thanh menu, tìm mục Settings, sau đó bên thanh Sidebar (tay phải), chọn Actions, chọn Runners. 
 # Chúng ta sẽ được chuyển đến màn hình Runners. Bấm New self-hosted runner 
+
 # Bonus: Tại terminal của con server VPS của chúng ta, gõ: uname -a (dùng để hiển thị thông tin cơ bản về hệ thống.) Ta sẽ thấy nó hiển thị tên kernel là Linux
+
 # - B3: Tại mục Runner image, chọn Linux. Tại mục Architecture, chọn x64
+
 # - B4: Tại mục Download, copy lần lượt từng câu lệnh dán vào trong terminal của con server VPS để thực thi. 
 # (Lưu ý trong server VPS nên cd về ~ (cd ~) trước khi bắt đầu thực hiện lần lượt từng câu lệnh Download)
+
 # - B5: Sau khi đã thực hiện đầy đủ toàn bộ các bước Download thì chúng ta sẽ tiến hành tiếp tục các bước ở mục Configure. Thường thì ở mục Configure sẽ chỉ bao gồm 2 bước cài đặt
 # - Sau khi copy chạy câu lệnh sau từ mục Configure: ./config.sh --url https://github.com/nguyenkien12345/ci-cd-develoment-tutorial --token ABCDXYZ123123456456789789
 # Thì nó sẽ hiển thị lên các lựa chọn như sau:
@@ -49,4 +62,10 @@ jobs:
 # 2) Enter the name of runner: [press Enter for codespaces-aad537] => Đặt tuỳ ý. Nhưng chúng ta nên đặt trùng nó với label của runner để dễ làm việc và quản lý. Ở đây tôi sẽ đặt là backend-server-staging
 # 3) Enter any additional labels (ex. label-1,label-2): [press Enter to skip] => Tạo label cho runner. Nên luôn luôn đặt giá trị vì nó quan trọng trong việc setup trigger các điều kiện. Ở đây tôi sẽ đặt là backend-server-staging (Trùng với name của Runner)
 # 4) Enter name of work folder: [press Enter for _work] =>  Gõ enter để để giá trị Default (Thư mục _work)
+
 # - B6: Chạy nốt câu lệnh ./run.sh trong mục Configure là done
+
+# - B7: Chúng ta mở một tab terminal mới trên con server (Vẫn để nguyên 1 terminal chạy cái tác vụ Listening for Jobs từ câu lệnh ./run.sh). Gõ: cd ~/actions-runner/
+
+# - B8: Nếu như mà chúng ta đã chạy ít nhất 1 actions từ con runners thì trong folder actions-runner sẽ xuất hiện folder _work (Nếu như chưa từng chạy 1 actions nào thì trong folder actions-runner sẽ không xuất hiện folder _work này)
+# Gõ cd _work => Gõ tiếp ls -la => Thì chúng ta sẽ thấy có folder dự án của chúng ta xuất hiện ở trong _work. Đó là do con runners checkout code của chúng ta ra sau đó nó sẽ tiến hành chạy các cái job trên cái source code này
