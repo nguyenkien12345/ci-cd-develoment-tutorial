@@ -47,5 +47,19 @@ jobs:
           docker run -i --rm -v $(pwd):/app/source -v $(pwd)/.prettierrc hocptit/eslint-ci:0.0.1 "."
           echo "Lint done."
     
+  run-unit-test:
+    runs-on: ubuntu-latest # Runner free
+    steps:
+      - name: Checkout code 
+        uses: actions/checkout@v3
+    
+      - name: Run Unit test
+        run: |
+          echo "Start jest..."
+          echo "Install tool..."
+          npm install jest
+          npx jest
+          echo "Run jest done."
+    
 # Notes:
-# - GitHub Actions runners (máy ảo Ubuntu) đã được cài đặt sẵn Docker và nhiều công cụ phổ biến khác. Đó là lý do ở trên ta không hề thấy việc cài đặt thiết lập docker
+# - GitHub Actions runners (máy ảo Ubuntu) đã được cài đặt sẵn Docker và nhiều công cụ phổ biến khác như nodejs pytthon, java. Đó là lý do ở trên ta không hề thấy việc cài đặt thiết lập docker
