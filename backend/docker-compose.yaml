@@ -5,10 +5,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # Load các biến môi trường từ file .env_docker vào container. File này phải được đặt cùng cấp với docker-compose.yaml. Tách biệt config khỏi code.
-    # Dễ thay đổi giá trị mà không cần sửa docker-compose. Có thể ignore file .env_docker trên git để bảo mật
+    # Load các biến môi trường từ file .env vào container. File này phải được đặt cùng cấp với docker-compose.yaml. Tách biệt config khỏi code.
+    # Dễ thay đổi giá trị mà không cần sửa docker-compose. Có thể ignore file .env trên git để bảo mật
     env_file:
-      - .env_docker
+      - .env
     # Map port 3001 từ container ra host
     ports:
       - 3001:3001
