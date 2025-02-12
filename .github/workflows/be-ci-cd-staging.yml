@@ -30,9 +30,24 @@ jobs:
         uses: actions/checkout@v3
 
       # Chỉ build image cho service node-container. Service mongodb sử dụng image có sẵn nên lệnh build mongodb là không cần thiết
+      
+      # echo "${{ secrets.ENV_STAGING }}" >> .env => Được sử dụng để tạo file .env từ một GitHub secret. 
+      
+      # - Trong repository của chúng ta, thanh menu chọn Settings. Tại thanh sidebars (tay phải), chọn mục Security, chọn Secrets and variables, chọn Actions. 
+      # Tại màn hình Actions secrets and variables, thanh tabs đang được active tại mục Secrets, tại mục Repository secrets bấm New repository secret.
+      # Tại màn hình Actions secrets / New secret, mục Name điền ENV_STAGING, mục Secret dán toàn bộ các giá trị của file .env vào là done
+      
+      # - Secret này thường chứa toàn bộ nội dung của file .env dưới dạng text
+      
+      # - >> là operator để append text vào file. Nếu file .env chưa tồn tại, nó sẽ được tạo mới. Nếu file đã tồn tại, nội dung sẽ được thêm vào cuối file
+      
+      # - Bảo mật: Không phải commit file .env vào repository
+      # - Tự động hóa: File .env được tạo tự động trong quá trình CI/CD
+      # - Linh hoạt: Có thể có các biến môi trường khác nhau cho các môi trường khác nhau (staging, production)
       - name: Build image
         run: |
           echo "Start Build Image..."
+          echo "${{ secrets.ENV_STAGING }}" >> .env
           docker compose build node-container
           echo "Build Image Done."
 
