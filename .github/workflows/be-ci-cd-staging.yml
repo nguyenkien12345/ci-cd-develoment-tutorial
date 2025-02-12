@@ -70,7 +70,7 @@ jobs:
           echo "Start Run Build Image..."
           echo "${{ secrets.ENV_STAGING }}" >> .env
           docker compose up -d
-          echo "Run Build Image Done.
+          echo "Run Build Image Done."
 
 
 
