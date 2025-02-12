@@ -1,0 +1,52 @@
+name: BE Deploy Staging
+run-name: BE Deploy Staging
+
+on:
+  push:
+    branches:
+      - 'staging'
+    paths:
+      - backend/**
+
+defaults:
+  run:
+    working-directory: ./backend
+
+jobs: 
+  build: 
+    # self-hosted: Chỉ định rằng job sẽ chạy trên runner do tổ chức/công ty tự quản lý, thay vì sử dụng GitHub-hosted runners.
+    # Có nghĩa là: Bạn đã cài đặt và cấu hình GitHub Actions runner trên server của riêng mình.
+    # Có toàn quyền kiểm soát về phần cứng, hệ điều hành và môi trường của runner.
+    # Có thể truy cập các tài nguyên nội bộ một cách an toàn
+
+    # backend-server-staging: Là label tự định nghĩa để xác định cụ thể runner nào sẽ xử lý job này. Label này cho biết:
+    # Job sẽ chạy trên server được gắn nhãn là "backend-server-staging". Đây có thể là môi trường staging dành riêng cho backend
+    # Runner phải có label này thì mới được chọn để chạy job 
+
+    # Do chúng ta có thể có nhiều con runner khác nhau, mà mỗi một con runner nó lại thực hiện 1 nhiệm vụ khác nhau hoặc 1 môi trường khác nhau
+    runs-on: [self-hosted, backend-server-staging]
+    steps:
+      - name: Checkout code 
+        uses: actions/checkout@v3
+
+
+
+
+
+
+# Hướng dẫn setup Runners của github vào trong server VPS nội bộ để chạy tích hợp CI/CD
+# - B1: Vào trong dự án (repository) trên github mà chúng ta muốn tích hợp Runners
+# - B2: Trên thanh menu, tìm mục Settings, sau đó bên thanh Sidebar (tay phải), chọn Actions, chọn Runners. 
+# Chúng ta sẽ được chuyển đến màn hình Runners. Bấm New self-hosted runner 
+# Bonus: Tại terminal của con server VPS của chúng ta, gõ: uname -a (dùng để hiển thị thông tin cơ bản về hệ thống.) Ta sẽ thấy nó hiển thị tên kernel là Linux
+# - B3: Tại mục Runner image, chọn Linux. Tại mục Architecture, chọn x64
+# - B4: Tại mục Download, copy lần lượt từng câu lệnh dán vào trong terminal của con server VPS để thực thi. 
+# (Lưu ý trong server VPS nên cd về ~ (cd ~) trước khi bắt đầu thực hiện lần lượt từng câu lệnh Download)
+# - B5: Sau khi đã thực hiện đầy đủ toàn bộ các bước Download thì chúng ta sẽ tiến hành tiếp tục các bước ở mục Configure. Thường thì ở mục Configure sẽ chỉ bao gồm 2 bước cài đặt
+# - Sau khi copy chạy câu lệnh sau từ mục Configure: ./config.sh --url https://github.com/nguyenkien12345/ci-cd-develoment-tutorial --token ABCDXYZ123123456456789789
+# Thì nó sẽ hiển thị lên các lựa chọn như sau:
+# 1) Enter the name of the runner group to add this runner to: [press Enter for Default]  => Gõ enter để để giá trị Default
+# 2) Enter the name of runner: [press Enter for codespaces-aad537] => Đặt tuỳ ý. Nhưng chúng ta nên đặt trùng nó với label của runner để dễ làm việc và quản lý. Ở đây tôi sẽ đặt là backend-server-staging
+# 3) Enter any additional labels (ex. label-1,label-2): [press Enter to skip] => Tạo label cho runner. Nên luôn luôn đặt giá trị vì nó quan trọng trong việc setup trigger các điều kiện. Ở đây tôi sẽ đặt là backend-server-staging (Trùng với name của Runner)
+# 4) Enter name of work folder: [press Enter for _work] =>  Gõ enter để để giá trị Default (Thư mục _work)
+# - B6: Chạy nốt câu lệnh ./run.sh trong mục Configure là done
