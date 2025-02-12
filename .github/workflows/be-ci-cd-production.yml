@@ -1,0 +1,63 @@
+name: BE Deploy Production
+run-name: BE Deploy Production
+
+on:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - backend/**
+
+defaults:
+  run:
+    working-directory: ./backend
+
+jobs: 
+  build: 
+    # Sử dụng lại con runners có label là backend-server-staging (Tạm). Nên tạo 1 con runners mới với label là backend-server-production
+    runs-on: [self-hosted, backend-server-staging]
+    steps:
+      - name: Checkout code 
+        uses: actions/checkout@v3
+
+      - name: Build image
+        run: |
+          echo "${{ secrets.ENV_PRODUCTION }}" >> .env
+          docker compose build node-container
+
+  deploy:
+    # Sử dụng lại con runners có label là backend-server-staging (Tạm). Nên tạo 1 con runners mới với label là backend-server-production
+    runs-on: [self-hosted, backend-server-staging]
+    needs: [build]
+    # environment
+    # - Là một môi trường deployment riêng biệt (như staging, production, development)
+    # - Được cấu hình trong Settings > Environments của repository
+    # - Mỗi environment có thể có các rules và secrets riêng
+
+    # Các tính năng chính của environment:
+    # + Protection rules:
+    # - Required reviewers: Yêu cầu approve trước khi deploy
+    # - Wait timer: Delay thời gian trước khi deploy
+    # - Deployment branches and tags: Chỉ định branches được phép deploy
+
+    # + Environment-specific secrets:
+    # - Mỗi environment có thể có các secrets riêng
+    # - Ví dụ: production có thể dùng credentials khác với staging
+
+    # environment: production => Job này sẽ chỉ chạy khi đáp ứng các protection rules của môi trường production. Chỉ có thể truy cập secrets được cấu hình cho môi trường production.
+    # Deployment history sẽ được track riêng cho môi trường production
+
+    # B1: Đứng trong repository của chúng ta, trên thanh menu chọn Settings, bên thanh sidebar phía tay phải chọn Environments. Tại màn hình Environments, bấm New environment.
+    # Tại màn hình Environments / Add, mục Name đặt tên phù hợp (VD: production). Bấm Configure environment. Chúng ta sẽ được chuyển đến màn hình Environments / Configure production
+    # Tại mục Deployment protection rules, mục Required reviewers, tick chọn vào, sau đó tại mục Add up to 6 more reviewers, điền những người review vào. Sau đó bấm Save protection rules
+
+    # Lúc này job production chỉ done khi và chỉ khi nó thoả mãn các rule của môi trường production
+    environment: production
+    steps:
+      - name: Checkout code 
+        uses: actions/checkout@v3
+
+      - name: Run image
+        run: |
+          echo "${{ secrets.ENV_PRODUCTION }}" >> .env
+          docker compose up -d
