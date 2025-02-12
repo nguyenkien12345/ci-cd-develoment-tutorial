@@ -53,7 +53,7 @@ jobs:
       - name: Checkout code 
         uses: actions/checkout@v3
     
-      - name: Using docker to check convention code
+      - name: Run Unit test
         run: |
           echo "Start jest..."
           echo "Install tool..."
