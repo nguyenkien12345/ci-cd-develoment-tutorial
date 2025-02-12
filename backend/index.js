@@ -4,8 +4,11 @@ const bodyParser = require('body-parser');
 const Sum = require('./utils');
 const app = express();
 const port = process.env.PORT || 3001;
+
 console.log(Sum(102, 106));
+
 const mongoUri = process.env.mongoUri || 'mongodb://admin:admin@localhost:27017/admin'
+
 mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -14,6 +17,7 @@ mongoose.connect(mongoUri, {
 }).catch((err) => {
   console.error('Failed to connect MongoDB:', err);
 });
+
 const id = "123"
 const articleSchema = new mongoose.Schema({
   title: String,
@@ -23,10 +27,14 @@ const articleSchema = new mongoose.Schema({
 });
 const Article = mongoose.model('Article', articleSchema);
 
-
 // Body-parser middleware
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
+
+api.get('/', async(req, res) => {
+  res.json({ message: "Hello World" })
+})
+
 app.get('/api/article', async (req, res) => {
   const article = await Article.findOne({id: id});
   res.json(article)
